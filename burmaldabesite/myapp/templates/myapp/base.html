@@ -1,0 +1,256 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}BDB — СУБД Бурмалда{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <style>
+        :root[data-theme="dark"] {
+            --bg-color: #0b0c10;
+            --header-bg: #12141d;
+            --card-bg: #161922;
+            --text-main: #e6e8ec;
+            --text-sub: #a0a6b5;
+            --gold: #e5a93b;
+            --border-color: #262b38;
+            --table-hover: #1c202c;
+        }
+
+        :root[data-theme="light"] {
+            --bg-color: #f4f5f8;
+            --header-bg: #ffffff;
+            --card-bg: #ffffff;
+            --text-main: #111827;
+            --text-sub: #4b5563;
+            --gold: #b87b10;
+            --border-color: #e5e7eb;
+            --table-hover: #f9fafb;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Book Antiqua', Palatino, serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .text-gold { color: var(--gold) !important; }
+        .text-subtext { color: var(--text-sub) !important; }
+
+        .bdb-navbar {
+            background-color: var(--header-bg);
+            border-bottom: 1px solid var(--border-color);
+            position: relative;
+        }
+
+        .navbar-brand img {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            border: 2px solid var(--gold);
+            object-fit: cover;
+        }
+
+        .navbar-brand span {
+            font-family: 'Book Antiqua', serif;
+            font-weight: bold;
+            letter-spacing: 1px;
+            color: var(--gold);
+        }
+
+        .nav-link {
+            color: var(--text-main) !important;
+            font-family: 'Book Antiqua', serif;
+            font-size: 1.05rem;
+            padding: 14px 20px !important;
+            transition: color 0.2s;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: var(--gold) !important;
+        }
+
+        /* Полоса рулетки */
+        .roulette-track-container {
+            width: 100%;
+            height: 16px;
+            background-color: #000000;
+            position: relative;
+            overflow: hidden;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+        }
+
+        .r-cell {
+            height: 100%;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .r-red { background-color: #dc3545; }
+        .r-black { background-color: #1a1a1a; }
+        .r-green { background-color: #198754; }
+
+        .ball {
+            width: 6px;
+            height: 6px;
+            background-color: #ffffff;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 4px #ffffff;
+        }
+
+        .card-bdb {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .btn-gold {
+            background-color: var(--gold);
+            color: #ffffff;
+            font-family: 'Book Antiqua', serif;
+            font-weight: bold;
+            border: none;
+        }
+
+        .btn-gold:hover {
+            opacity: 0.9;
+            color: #ffffff;
+        }
+
+        .btn-outline-gold {
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            font-family: 'Book Antiqua', serif;
+        }
+
+        .btn-outline-gold:hover {
+            background-color: var(--gold);
+            color: #ffffff;
+        }
+
+        .table-bdb {
+            color: var(--text-main);
+        }
+
+        .table-bdb th {
+            border-bottom: 2px solid var(--border-color);
+            color: var(--gold);
+        }
+
+        .table-bdb td {
+            border-bottom: 1px solid var(--border-color);
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+    <header class="bdb-navbar sticky-top">
+        <div class="container d-flex justify-content-between align-items-center py-2">
+            <a class="navbar-brand d-flex align-items-center gap-2 text-decoration-none" href="{% url 'myapp:index' %}">
+                <img src="{% static 'myapp/logo.png' %}" onerror="this.onerror=null; this.src='https://via.placeholder.com/42/12141d/e5a93b?text=BDB';" alt="BDB Logo">
+                <span class="fs-4">BDB СУБД</span>
+            </a>
+
+            <div class="d-flex align-items-center gap-4">
+                <ul class="nav">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'index' %}active fw-bold{% endif %}" href="{% url 'myapp:index' %}" id="tab-index">База данных</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'table_view' %}active fw-bold{% endif %}" href="{% url 'myapp:table_view' %}" id="tab-table">CSV / BIN Таблицы</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'roulette' %}active fw-bold{% endif %}" href="{% url 'myapp:roulette' %}" id="tab-roulette">Бурмалда</a>
+                    </li>
+                </ul>
+
+                <button class="btn btn-sm btn-outline-gold" id="themeToggleBtn" type="button">
+                    Тема: Темная
+                </button>
+            </div>
+        </div>
+
+        <!-- Единая полоса рулетки без наложений -->
+        <div class="roulette-track-container" id="trackContainer">
+            <div id="trackCells" class="w-100 h-100 d-flex"></div>
+        </div>
+    </header>
+
+    <main class="container my-5">
+        {% block content %}{% endblock %}
+    </main>
+
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script>
+        const CELL_WIDTH = 35; // Фиксированная ширина ячейки
+
+        function renderTrack() {
+            const container = document.getElementById('trackContainer');
+            const trackCells = document.getElementById('trackCells');
+            trackCells.innerHTML = '';
+
+            const totalCells = Math.max(60, Math.floor(container.clientWidth / CELL_WIDTH) + 5);
+
+            // Определяем, под какой вкладкой должен быть зеленый элемент с шариком
+            const activeTab = document.querySelector('.nav-link.active');
+            let greenIndex = 12; // позиция по умолчанию
+
+            if (activeTab && container) {
+                const tabRect = activeTab.getBoundingClientRect();
+                const containerRect = container.getBoundingClientRect();
+                const tabCenter = tabRect.left + (tabRect.width / 2) - containerRect.left;
+                greenIndex = Math.floor(tabCenter / CELL_WIDTH);
+            }
+
+            for (let i = 0; i < totalCells; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'r-cell';
+                cell.style.width = CELL_WIDTH + 'px';
+                cell.style.minWidth = CELL_WIDTH + 'px';
+
+                if (i === greenIndex) {
+                    cell.classList.add('r-green');
+                    const ball = document.createElement('div');
+                    ball.className = 'ball';
+                    cell.appendChild(ball);
+                } else if (i % 2 === 0) {
+                    cell.classList.add('r-red');
+                } else {
+                    cell.classList.add('r-black');
+                }
+                trackCells.appendChild(cell);
+            }
+        }
+
+        const themeBtn = document.getElementById('themeToggleBtn');
+        const htmlElem = document.documentElement;
+
+        function setTheme(theme) {
+            htmlElem.setAttribute('data-theme', theme);
+            localStorage.setItem('bdb-theme', theme);
+            themeBtn.innerText = 'Тема: ' + (theme === 'dark' ? 'Темная' : 'Светлая');
+            setTimeout(renderTrack, 50);
+        }
+
+        themeBtn.addEventListener('click', () => {
+            const currentTheme = htmlElem.getAttribute('data-theme');
+            setTheme(currentTheme === 'dark' ? 'light' : 'dark');
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const savedTheme = localStorage.getItem('bdb-theme') || 'dark';
+            setTheme(savedTheme);
+            window.addEventListener('resize', renderTrack);
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

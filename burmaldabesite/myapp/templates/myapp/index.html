@@ -1,0 +1,88 @@
+{% extends 'myapp/base.html' %}
+
+{% block title %}BDB — Главная панель СУБД{% endblock %}
+
+{% block content %}
+<div class="row mb-5">
+    <div class="col-12 text-center">
+        <h1 class="text-gold display-5 fw-bold">Ядро СУБД «Бурмалда» (BDB)</h1>
+        <p class="text-subtext fs-5 mt-2">Панель графического представления бинарных блоков (.bin) и CSV-структур</p>
+    </div>
+</div>
+
+<!-- Статистика СУБД -->
+<div class="row g-4 mb-5">
+    <div class="col-md-4">
+        <div class="card card-bdb p-4 text-center">
+            <h6 class="text-subtext text-uppercase tracking-wide">Формат хранения</h6>
+            <h3 class="text-gold mt-2">Binary (.bin)</h3>
+            <p class="small text-subtext mb-0 mt-1">Типы данных: int, smallint, float, char(50)</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card card-bdb p-4 text-center">
+            <h6 class="text-subtext text-uppercase tracking-wide">Активные блоки</h6>
+            <h3 class="text-gold mt-2">1,024 BDB Blocks</h3>
+            <p class="small text-subtext mb-0 mt-1">Полная синхронизация с казино-модулем</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card card-bdb p-4 text-center">
+            <h6 class="text-subtext text-uppercase tracking-wide">Статус системы</h6>
+            <h3 class="text-success mt-2">ONLINE</h3>
+            <p class="small text-subtext mb-0 mt-1">Движок обработал запросы без ошибок</p>
+        </div>
+    </div>
+</div>
+
+<!-- Графическое представление данных -->
+<div class="card card-bdb p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="text-gold m-0">Графическая структура данных BDB</h3>
+        <a href="{% url 'myapp:table_view' %}" class="btn btn-outline-gold btn-sm">Открыть таблицу полностью</a>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-bdb align-middle">
+            <thead>
+                <tr>
+                    <th>ID (int)</th>
+                    <th>Code (smallint)</th>
+                    <th>Score (float)</th>
+                    <th>Name / Node (char 50)</th>
+                    <th>Статус ячейки</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>0x001</td>
+                    <td><span class="badge bg-danger">7</span></td>
+                    <td>1050.25</td>
+                    <td>Burmalda_Red_Sector_Node</td>
+                    <td><span class="text-danger fw-bold">RED</span></td>
+                </tr>
+                <tr>
+                    <td>0x002</td>
+                    <td><span class="badge bg-dark border border-secondary">14</span></td>
+                    <td>3200.00</td>
+                    <td>Burmalda_Black_Block</td>
+                    <td><span class="text-subtext fw-bold">BLACK</span></td>
+                </tr>
+                <tr>
+                    <td>0x003</td>
+                    <td><span class="badge bg-success">0</span></td>
+                    <td>0.00</td>
+                    <td>Zero_Index_Core</td>
+                    <td><span class="text-success fw-bold">GREEN (ZERO)</span></td>
+                </tr>
+                <tr>
+                    <td>0x004</td>
+                    <td><span class="badge bg-danger">32</span></td>
+                    <td>740.50</td>
+                    <td>High_Stakes_Node_BDB</td>
+                    <td><span class="text-danger fw-bold">RED</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

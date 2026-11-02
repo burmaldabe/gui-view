@@ -1,0 +1,67 @@
+{% extends 'myapp/base.html' %}
+
+{% block title %}BDB — Бурмалда{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 text-center card card-bdb p-5">
+        <h1 class="text-gold mb-4">Бурмалда (BDB)</h1>
+
+        <div class="d-flex flex-column align-items-center my-4">
+            <!-- Указатель сверху колеса -->
+            <div style="width: 0; height: 0; border-left: 12px solid transparent; border-right: 12px solid transparent; border-top: 20px solid var(--gold); margin-bottom: -5px; z-index: 10;"></div>
+
+            <!-- Исправленное колесо с четкими секторами -->
+            <div class="wheel" id="wheel" style="width: 300px; height: 300px; border-radius: 50%; border: 10px solid var(--gold); position: relative; transition: transform 4s cubic-bezier(0.15, 0.9, 0.15, 1); background: conic-gradient(
+                #198754 0deg 18deg,
+                #dc3545 18deg 36deg, #1a1a1a 36deg 54deg,
+                #dc3545 54deg 72deg, #1a1a1a 72deg 90deg,
+                #dc3545 90deg 108deg, #1a1a1a 108deg 126deg,
+                #dc3545 126deg 144deg, #1a1a1a 144deg 162deg,
+                #dc3545 162deg 180deg, #1a1a1a 180deg 198deg,
+                #dc3545 198deg 216deg, #1a1a1a 216deg 234deg,
+                #dc3545 234deg 252deg, #1a1a1a 252deg 270deg,
+                #dc3545 270deg 288deg, #1a1a1a 288deg 306deg,
+                #dc3545 306deg 324deg, #1a1a1a 324deg 342deg,
+                #dc3545 342deg 360deg);">
+                <div style="width: 70px; height: 70px; background: var(--card-bg); border-radius: 50%; position: absolute; top: 105px; left: 105px; border: 3px solid var(--gold); display: flex; align-items: center; justify-content: center; font-weight: bold; color: var(--gold);">BDB</div>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <button class="btn btn-gold btn-lg px-5 py-2" id="spin-btn">Крутить Бурмалду!</button>
+            <h4 class="mt-4 text-subtext" id="result-text">Сделайте ставку в ядро BDB</h4>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const wheel = document.getElementById('wheel');
+    const spinBtn = document.getElementById('spin-btn');
+    const resultText = document.getElementById('result-text');
+    let currentRotation = 0;
+
+    spinBtn.addEventListener('click', () => {
+        spinBtn.disabled = true;
+        resultText.innerText = "Бурмалда обрабатывает транзакцию...";
+
+        const extraDegrees = Math.floor(Math.random() * 360);
+        currentRotation += 1800 + extraDegrees;
+        wheel.style.transform = `rotate(${currentRotation}deg)`;
+
+        setTimeout(() => {
+            spinBtn.disabled = false;
+            const normalizedAngle = (360 - (currentRotation % 360)) % 360;
+            if (normalizedAngle >= 0 && normalizedAngle < 18) {
+                resultText.innerHTML = "<span class='text-success fw-bold'>ВЫПАЛ ЗЕРО (0)! Ячейка зафиксирована.</span>";
+            } else if (Math.floor(normalizedAngle / 18) % 2 === 1) {
+                resultText.innerHTML = "<span class='text-danger fw-bold'>ВЫПАЛО КРАСНОЕ! Блок обновлен.</span>";
+            } else {
+                resultText.innerHTML = "<span class='text-subtext fw-bold'>ВЫПАЛО ЧЕРНОЕ! Блок обновлен.</span>";
+            }
+        }, 4000);
+    });
+</script>
+{% endblock %}
