@@ -1,40 +1,143 @@
 {% extends 'myapp/base.html' %}
 
-{% block title %}BDB — Таблицы CSV / BIN{% endblock %}
+{% block title %}BDB — Таблицы СУБД (SSMS View){% endblock %}
 
 {% block content %}
-<div class="card card-bdb p-4">
-    <h2 class="text-gold mb-4">📊 Детальный просмотр таблиц СУБД BDB</h2>
-    <table id="csvTable" class="table table-dark table-hover table-striped w-100">
-        <thead>
-            <tr class="text-gold">
-                {% for header in table.headers %}
-                    <th>{{ header }}</th>
-                {% endfor %}
-            </tr>
-        </thead>
-        <tbody>
-            {% for row in table.rows %}
-                <tr>
-                    {% for cell in row %}
-                        <td>{{ cell }}</td>
-                    {% endfor %}
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="text-gold mb-2">Обозреватель объектов СУБД BDB (SSMS Style)</h2>
+        <p class="text-subtext">Все реляционные таблицы базы данных, внешние ключи и актуальные данные узлов.</p>
+    </div>
 </div>
-{% endblock %}
 
-{% block extra_js %}
-<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
-<script>
-    $(document).ready(function() {
-        $('#csvTable').DataTable({
-            "language": { "url": "//cdn.datatables.net/plug-ins/1.13.6/i18n/ru.json" },
-            "pageLength": 10
-        });
-    });
-</script>
+<!-- Таблица 1: BDB_Blocks -->
+<div class="card card-bdb p-4 mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="text-gold m-0">Таблица: [dbo].[BDB_Blocks]</h4>
+        <span class="badge bg-secondary text-light">Связь: 1 : N</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-bdb align-middle">
+            <thead>
+                <tr>
+                    <th><span class="text-gold">PK</span> id (int)</th>
+                    <th>code (smallint)</th>
+                    <th>score / balance (float)</th>
+                    <th>name (char 50)</th>
+                    <th>is_active (boolean)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>0x001</td>
+                    <td>7</td>
+                    <td><span class="fw-bold text-gold" data-bdb-node="0x001">1050.25</span></td>
+                    <td>Burmalda_Red_Sector_Node</td>
+                    <td>true</td>
+                </tr>
+                <tr>
+                    <td>0x002</td>
+                    <td>14</td>
+                    <td><span class="fw-bold text-gold" data-bdb-node="0x002">3200.00</span></td>
+                    <td>Burmalda_Black_Block</td>
+                    <td>true</td>
+                </tr>
+                <tr>
+                    <td>0x003</td>
+                    <td>0</td>
+                    <td><span class="fw-bold text-gold" data-bdb-node="0x003">0.00</span></td>
+                    <td>Zero_Index_Core</td>
+                    <td>false</td>
+                </tr>
+                <tr>
+                    <td>0x004</td>
+                    <td>32</td>
+                    <td><span class="fw-bold text-gold" data-bdb-node="0x004">740.50</span></td>
+                    <td>High_Stakes_Node_BDB</td>
+                    <td>true</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Таблица 2: Burmalda_Transactions -->
+<div class="card card-bdb p-4 mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="text-gold m-0">Таблица: [dbo].[Burmalda_Transactions]</h4>
+        <span class="badge bg-dark border border-secondary text-light">Связь: FK -> BDB_Blocks.id</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-bdb align-middle">
+            <thead>
+                <tr>
+                    <th><span class="text-gold">PK</span> tx_id (bigint)</th>
+                    <th><span class="text-info">FK</span> block_id (int)</th>
+                    <th>bet_amount (float)</th>
+                    <th>status (varchar 50)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>10001</td>
+                    <td>0x001</td>
+                    <td>500.00</td>
+                    <td>COMMITTED_WIN</td>
+                </tr>
+                <tr>
+                    <td>10002</td>
+                    <td>0x002</td>
+                    <td>1200.50</td>
+                    <td>ROLLBACK_LOSS</td>
+                </tr>
+                <tr>
+                    <td>10003</td>
+                    <td>0x004</td>
+                    <td>150.00</td>
+                    <td>ACTIVE_SESSION</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Таблица 3: Casino_Nodes -->
+<div class="card card-bdb p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="text-gold m-0">Таблица: [dbo].[Casino_Nodes]</h4>
+        <span class="badge bg-dark border border-secondary text-light">Связь: FK -> BDB_Blocks.id</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-bdb align-middle">
+            <thead>
+                <tr>
+                    <th><span class="text-gold">PK</span> node_id (int)</th>
+                    <th><span class="text-info">FK</span> block_id (int)</th>
+                    <th>game_type (varchar 50)</th>
+                    <th>payout_ratio (float)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>501</td>
+                    <td>0x001</td>
+                    <td>Wheel_Burmalda</td>
+                    <td>35.0</td>
+                </tr>
+                <tr>
+                    <td>502</td>
+                    <td>0x002</td>
+                    <td>Slots_BDB</td>
+                    <td>10.0</td>
+                </tr>
+                <tr>
+                    <td>503</td>
+                    <td>0x004</td>
+                    <td>Blackjack_21</td>
+                    <td>2.0</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
 {% endblock %}

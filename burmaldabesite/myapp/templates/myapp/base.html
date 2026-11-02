@@ -64,7 +64,7 @@
             color: var(--text-main) !important;
             font-family: 'Book Antiqua', serif;
             font-size: 1.05rem;
-            padding: 14px 20px !important;
+            padding: 14px 18px !important;
             transition: color 0.2s;
         }
 
@@ -72,7 +72,6 @@
             color: var(--gold) !important;
         }
 
-        /* Полоса рулетки */
         .roulette-track-container {
             width: 100%;
             height: 16px;
@@ -113,7 +112,7 @@
 
         .btn-gold {
             background-color: var(--gold);
-            color: #ffffff;
+            color: #000000 !important;
             font-family: 'Book Antiqua', serif;
             font-weight: bold;
             border: none;
@@ -121,18 +120,19 @@
 
         .btn-gold:hover {
             opacity: 0.9;
-            color: #ffffff;
+            color: #000000 !important;
         }
 
         .btn-outline-gold {
             border: 1px solid var(--gold);
-            color: var(--gold);
+            color: var(--gold) !important;
             font-family: 'Book Antiqua', serif;
+            background: transparent;
         }
 
         .btn-outline-gold:hover {
             background-color: var(--gold);
-            color: #ffffff;
+            color: #000000 !important;
         }
 
         .table-bdb {
@@ -162,13 +162,16 @@
             <div class="d-flex align-items-center gap-4">
                 <ul class="nav">
                     <li class="nav-item">
-                        <a class="nav-link {% if request.resolver_match.url_name == 'index' %}active fw-bold{% endif %}" href="{% url 'myapp:index' %}" id="tab-index">База данных</a>
+                        <a class="nav-link {% if request.resolver_match.url_name == 'index' %}active fw-bold{% endif %}" href="{% url 'myapp:index' %}">База данных</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if request.resolver_match.url_name == 'table_view' %}active fw-bold{% endif %}" href="{% url 'myapp:table_view' %}" id="tab-table">CSV / BIN Таблицы</a>
+                        <a class="nav-link {% if request.resolver_match.url_name == 'table_view' %}active fw-bold{% endif %}" href="{% url 'myapp:table_view' %}">CSV / BIN Таблицы</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if request.resolver_match.url_name == 'roulette' %}active fw-bold{% endif %}" href="{% url 'myapp:roulette' %}" id="tab-roulette">Бурмалда</a>
+                        <a class="nav-link {% if request.resolver_match.url_name == 'diagram_view' %}active fw-bold{% endif %}" href="{% url 'myapp:diagram_view' %}">Диаграмма БД</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'roulette' %}active fw-bold{% endif %}" href="{% url 'myapp:roulette' %}">Бурмалда</a>
                     </li>
                 </ul>
 
@@ -178,7 +181,6 @@
             </div>
         </div>
 
-        <!-- Единая полоса рулетки без наложений -->
         <div class="roulette-track-container" id="trackContainer">
             <div id="trackCells" class="w-100 h-100 d-flex"></div>
         </div>
@@ -190,18 +192,46 @@
 
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <script>
-        const CELL_WIDTH = 35; // Фиксированная ширина ячейки
+        // Единый глобальный модуль хранения СУБД
+        const BDBStore = {
+            defaultData: {
+                '0x001': 1050.25,
+                '0x002': 3200.00,
+                '0x003': 0.00,
+                '0x004': 740.50
+            },
+            getNodes() {
+                const stored = localStorage.getItem('bdb_nodes_data');
+                return stored ? JSON.parse(stored) : this.defaultData;
+            },
+            setNodeScore(nodeId, newScore) {
+                const nodes = this.getNodes();
+                nodes[nodeId] = Math.max(0, parseFloat(newScore.toFixed(2)));
+                localStorage.setItem('bdb_nodes_data', JSON.stringify(nodes));
+                this.syncUI();
+            },
+            syncUI() {
+                const nodes = this.getNodes();
+                // Синхронизация ячеек во всех таблицах
+                document.querySelectorAll('[data-bdb-node]').forEach(elem => {
+                    const id = elem.getAttribute('data-bdb-node');
+                    if (nodes[id] !== undefined) {
+                        elem.innerText = nodes[id].toFixed(2);
+                    }
+                });
+            }
+        };
 
+        const CELL_WIDTH = 35;
         function renderTrack() {
             const container = document.getElementById('trackContainer');
             const trackCells = document.getElementById('trackCells');
+            if (!container || !trackCells) return;
             trackCells.innerHTML = '';
 
             const totalCells = Math.max(60, Math.floor(container.clientWidth / CELL_WIDTH) + 5);
-
-            // Определяем, под какой вкладкой должен быть зеленый элемент с шариком
             const activeTab = document.querySelector('.nav-link.active');
-            let greenIndex = 12; // позиция по умолчанию
+            let greenIndex = 12;
 
             if (activeTab && container) {
                 const tabRect = activeTab.getBoundingClientRect();
@@ -246,6 +276,7 @@
         });
 
         document.addEventListener("DOMContentLoaded", function() {
+            BDBStore.syncUI();
             const savedTheme = localStorage.getItem('bdb-theme') || 'dark';
             setTheme(savedTheme);
             window.addEventListener('resize', renderTrack);

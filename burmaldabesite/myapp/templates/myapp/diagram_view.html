@@ -1,0 +1,116 @@
+{% extends 'myapp/base.html' %}
+
+{% block title %}BDB — Диаграмма БД (SSMS 2022 Diagram){% endblock %}
+
+{% block extra_css %}
+<style>
+    .ssms-container {
+        background-color: #1e1e1e;
+        border: 2px solid #333;
+        border-radius: 6px;
+        position: relative;
+        min-height: 520px;
+        overflow: hidden;
+        box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+    }
+    
+    .ssms-grid {
+        background-size: 20px 20px;
+        background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                          linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    }
+
+    .ssms-table {
+        position: absolute;
+        width: 250px;
+        background: #2d2d2d;
+        border: 1px solid #007acc;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        font-family: 'Segoe UI', Tahoma, sans-serif;
+        font-size: 13px;
+        color: #d4d4d4;
+    }
+
+    .ssms-header {
+        background: #007acc;
+        color: #ffffff;
+        padding: 5px 10px;
+        font-weight: bold;
+        font-size: 13px;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .ssms-row {
+        padding: 4px 10px;
+        border-bottom: 1px solid #3c3c3c;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .ssms-row:hover { background: #37373d; }
+    
+    .key-pk { color: #e5a93b; font-weight: bold; }
+    .key-fk { color: #569cd6; font-weight: bold; }
+
+    /* Линии связи SSMS */
+    svg.ssms-connector {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="text-gold mb-2">Диаграмма базы данных BDB (SSMS 2022 View)</h2>
+        <p class="text-subtext">Визуальное дерево связей таблиц, первичных ключей (PK) и реляционных внешних ключей (FK).</p>
+    </div>
+</div>
+
+<div class="ssms-container ssms-grid p-4">
+    <svg class="ssms-connector">
+        <!-- Линии связи между таблицами -->
+        <path d="M 270 120 L 400 120" stroke="#007acc" stroke-width="2" fill="none" stroke-dasharray="4"/>
+        <circle cx="270" cy="120" r="4" fill="#e5a93b"/>
+        <polygon points="400,120 390,115 390,125" fill="#569cd6"/>
+
+        <path d="M 270 160 L 330 160 L 330 320 L 400 320" stroke="#007acc" stroke-width="2" fill="none"/>
+        <circle cx="270" cy="160" r="4" fill="#e5a93b"/>
+        <polygon points="400,320 390,315 390,325" fill="#569cd6"/>
+    </svg>
+
+    <!-- Таблица 1: BDB_Blocks -->
+    <div class="ssms-table" style="top: 40px; left: 20px;">
+        <div class="ssms-header">dbo.BDB_Blocks <span>[Table]</span></div>
+        <div class="ssms-row"><span><span class="key-pk">PK</span> id</span> <span class="text-muted">int</span></div>
+        <div class="ssms-row"><span>code</span> <span class="text-muted">smallint</span></div>
+        <div class="ssms-row"><span>score</span> <span class="text-muted">float</span></div>
+        <div class="ssms-row"><span>name</span> <span class="text-muted">char(50)</span></div>
+        <div class="ssms-row"><span>is_active</span> <span class="text-muted">boolean</span></div>
+    </div>
+
+    <!-- Таблица 2: Burmalda_Transactions -->
+    <div class="ssms-table" style="top: 40px; left: 400px;">
+        <div class="ssms-header">dbo.Burmalda_Transactions <span>[Table]</span></div>
+        <div class="ssms-row"><span><span class="key-pk">PK</span> tx_id</span> <span class="text-muted">bigint</span></div>
+        <div class="ssms-row"><span><span class="key-fk">FK</span> block_id</span> <span class="text-muted">int</span></div>
+        <div class="ssms-row"><span>bet_amount</span> <span class="text-muted">float</span></div>
+        <div class="ssms-row"><span>status</span> <span class="text-muted">varchar(50)</span></div>
+    </div>
+
+    <!-- Таблица 3: Casino_Nodes -->
+    <div class="ssms-table" style="top: 260px; left: 400px;">
+        <div class="ssms-header">dbo.Casino_Nodes <span>[Table]</span></div>
+        <div class="ssms-row"><span><span class="key-pk">PK</span> node_id</span> <span class="text-muted">int</span></div>
+        <div class="ssms-row"><span><span class="key-fk">FK</span> block_id</span> <span class="text-muted">int</span></div>
+        <div class="ssms-row"><span>game_type</span> <span class="text-muted">varchar(50)</span></div>
+        <div class="ssms-row"><span>payout_ratio</span> <span class="text-muted">float</span></div>
+    </div>
+</div>
+{% endblock %}

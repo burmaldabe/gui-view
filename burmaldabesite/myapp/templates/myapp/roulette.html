@@ -1,67 +1,552 @@
 {% extends 'myapp/base.html' %}
 
-{% block title %}BDB — Бурмалда{% endblock %}
+{% block title %}BDB — Бурмалда Казино{% endblock %}
+
+{% block extra_css %}
+<!-- Подключаем скрипт анимации конфетти для побед -->
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+<style>
+    .game-tab-btn {
+        font-family: 'Book Antiqua', serif;
+        font-size: 1rem;
+        padding: 8px 18px;
+        border-radius: 4px;
+        transition: all 0.2s;
+    }
+    .game-tab-btn.active-tab {
+        background-color: var(--gold) !important;
+        color: #000000 !important;
+        font-weight: bold;
+        box-shadow: 0 0 12px rgba(229, 169, 59, 0.6);
+    }
+    .game-tab-btn.inactive-tab {
+        background-color: transparent !important;
+        color: var(--gold) !important;
+        border: 1px solid var(--gold) !important;
+    }
+
+    .casino-felt {
+        background: radial-gradient(circle, #1a4325 0%, #0d2313 100%);
+        border: 8px solid #5c3a21;
+        border-radius: 12px;
+        box-shadow: inset 0 0 25px rgba(0,0,0,0.8), 0 8px 20px rgba(0,0,0,0.5);
+    }
+
+    /* Анимации карт */
+    .playing-card {
+        width: 65px;
+        height: 95px;
+        background: #ffffff;
+        color: #111111;
+        border-radius: 6px;
+        display: inline-flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 6px;
+        font-weight: bold;
+        font-size: 1.1rem;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        user-select: none;
+        transform: scale(0.8);
+        opacity: 0;
+        animation: dealCard 0.3s forwards ease-out;
+    }
+    .playing-card.red-suit { color: #dc3545; }
+
+    @keyframes dealCard {
+        to { transform: scale(1); opacity: 1; }
+    }
+
+    /* Анимация броска костей */
+    @keyframes rollDiceAnim {
+        0% { transform: rotate(0deg) scale(1); }
+        50% { transform: rotate(180deg) scale(1.2); }
+        100% { transform: rotate(360deg) scale(1); }
+    }
+    .rolling {
+        animation: rollDiceAnim 0.5s ease-in-out;
+    }
+
+    .dice-cube {
+        width: 60px;
+        height: 60px;
+        background: #ffffff;
+        border-radius: 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        font-weight: bold;
+        color: #111;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.6);
+    }
+
+    /* Анимация слотов */
+    .slot-machine {
+        background: #111;
+        border: 4px solid var(--gold);
+        border-radius: 10px;
+        padding: 15px;
+        display: inline-flex;
+        gap: 15px;
+        box-shadow: 0 0 20px rgba(229, 169, 59, 0.3);
+    }
+    .slot-window {
+        width: 75px;
+        height: 85px;
+        background: #222;
+        border: 2px solid #444;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: var(--gold);
+        font-weight: bold;
+        transition: transform 0.2s;
+    }
+    .slot-spin {
+        animation: slotSpinAnim 0.1s infinite linear;
+    }
+    @keyframes slotSpinAnim {
+        0% { transform: translateY(-5px); }
+        50% { transform: translateY(5px); }
+        100% { transform: translateY(-5px); }
+    }
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
-    <div class="col-md-8 text-center card card-bdb p-5">
-        <h1 class="text-gold mb-4">Бурмалда (BDB)</h1>
+    <div class="col-md-10 text-center card card-bdb p-4">
+        <h1 class="text-gold mb-2">Игровой зал "Бурмалда" (BDB)</h1>
+        <p class="text-subtext mb-4">Симуляция реляционных транзакций и обновление узлов СУБД</p>
 
-        <div class="d-flex flex-column align-items-center my-4">
-            <!-- Указатель сверху колеса -->
-            <div style="width: 0; height: 0; border-left: 12px solid transparent; border-right: 12px solid transparent; border-top: 20px solid var(--gold); margin-bottom: -5px; z-index: 10;"></div>
+        <!-- Меню выбора игр -->
+        <div class="d-flex justify-content-center flex-wrap gap-3 mb-4 pb-3 border-bottom border-secondary">
+            <button class="btn game-tab-btn active-tab" onclick="switchGame(this, 'wheel')">1. Колесо</button>
+            <button class="btn game-tab-btn inactive-tab" onclick="switchGame(this, 'slots')">2. Слоты</button>
+            <button class="btn game-tab-btn inactive-tab" onclick="switchGame(this, 'dice')">3. Кости</button>
+            <button class="btn game-tab-btn inactive-tab" onclick="switchGame(this, 'blackjack')">4. Блекджек</button>
+            <button class="btn game-tab-btn inactive-tab" onclick="switchGame(this, 'poker')">5. Покер</button>
+        </div>
 
-            <!-- Исправленное колесо с четкими секторами -->
-            <div class="wheel" id="wheel" style="width: 300px; height: 300px; border-radius: 50%; border: 10px solid var(--gold); position: relative; transition: transform 4s cubic-bezier(0.15, 0.9, 0.15, 1); background: conic-gradient(
-                #198754 0deg 18deg,
-                #dc3545 18deg 36deg, #1a1a1a 36deg 54deg,
-                #dc3545 54deg 72deg, #1a1a1a 72deg 90deg,
-                #dc3545 90deg 108deg, #1a1a1a 108deg 126deg,
-                #dc3545 126deg 144deg, #1a1a1a 144deg 162deg,
-                #dc3545 162deg 180deg, #1a1a1a 180deg 198deg,
-                #dc3545 198deg 216deg, #1a1a1a 216deg 234deg,
-                #dc3545 234deg 252deg, #1a1a1a 252deg 270deg,
-                #dc3545 270deg 288deg, #1a1a1a 288deg 306deg,
-                #dc3545 306deg 324deg, #1a1a1a 324deg 342deg,
-                #dc3545 342deg 360deg);">
-                <div style="width: 70px; height: 70px; background: var(--card-bg); border-radius: 50%; position: absolute; top: 105px; left: 105px; border: 3px solid var(--gold); display: flex; align-items: center; justify-content: center; font-weight: bold; color: var(--gold);">BDB</div>
+        <!-- Выбор узла СУБД и суммы ставки -->
+        <div class="mb-4 d-flex justify-content-center align-items-center flex-wrap gap-3">
+            <div>
+                <label class="text-subtext me-2">Узел СУБД:</label>
+                <select id="dbNodeSelect" class="form-select w-auto d-inline-block bg-dark text-light border-secondary" onchange="syncSelectedNodeDisplay()">
+                    <option value="0x001">Node 0x001 (Balance: <span data-bdb-node="0x001">1050.25</span> CR)</option>
+                    <option value="0x002">Node 0x002 (Balance: <span data-bdb-node="0x002">3200.00</span> CR)</option>
+                    <option value="0x004">Node 0x004 (Balance: <span data-bdb-node="0x004">740.50</span> CR)</option>
+                </select>
+            </div>
+            <div>
+                <label class="text-subtext me-2">Сумма ставки:</label>
+                <input type="number" id="betAmountInput" class="form-control w-auto d-inline-block bg-dark text-light border-secondary text-center" value="100" min="1" style="width: 110px;">
+            </div>
+            <div id="wheel-bet-type">
+                <label class="text-subtext me-2">Ставка на колесе:</label>
+                <select id="wheelBetChoice" class="form-select w-auto d-inline-block bg-dark text-light border-secondary">
+                    <option value="red">Красное (x2)</option>
+                    <option value="black">Черное (x2)</option>
+                    <option value="green">Зеро (x35)</option>
+                </select>
             </div>
         </div>
 
-        <div class="mt-4">
-            <button class="btn btn-gold btn-lg px-5 py-2" id="spin-btn">Крутить Бурмалду!</button>
-            <h4 class="mt-4 text-subtext" id="result-text">Сделайте ставку в ядро BDB</h4>
+        <!-- 1. ИДЕАЛЬНОЕ СИММЕТРИЧНОЕ КОЛЕСО -->
+        <div id="game-wheel" class="game-container">
+            <div class="d-flex flex-column align-items-center my-3">
+                <!-- Указатель строго по центру верхушки -->
+                <div style="width: 0; height: 0; border-left: 10px solid transparent; border-right: 10px solid transparent; border-top: 18px solid var(--gold); margin-bottom: -4px; z-index: 10;"></div>
+                <div style="position: relative; width: 280px; height: 280px;">
+                    <!-- Математически выверенный градиент с ровными секторами по 18 градусов -->
+                    <div id="wheel-ring" style="width: 280px; height: 280px; border-radius: 50%; border: 8px solid var(--gold); position: absolute; top:0; left:0; transition: transform 4s cubic-bezier(0.15, 0.9, 0.15, 1); background: conic-gradient(
+                        #198754 0deg 18deg,
+                        #dc3545 18deg 36deg, #1a1a1a 36deg 54deg,
+                        #dc3545 54deg 72deg, #1a1a1a 72deg 90deg,
+                        #dc3545 90deg 108deg, #1a1a1a 108deg 126deg,
+                        #dc3545 126deg 144deg, #1a1a1a 144deg 162deg,
+                        #dc3545 162deg 180deg, #1a1a1a 180deg 198deg,
+                        #dc3545 198deg 216deg, #1a1a1a 216deg 234deg,
+                        #dc3545 234deg 252deg, #1a1a1a 252deg 270deg,
+                        #dc3545 270deg 288deg, #1a1a1a 288deg 306deg,
+                        #dc3545 306deg 324deg, #1a1a1a 324deg 342deg,
+                        #dc3545 342deg 360deg
+                    );"></div>
+                    <!-- Фиксированный центр BDB -->
+                    <div style="width: 64px; height: 64px; background: var(--card-bg); border-radius: 50%; position: absolute; top: 108px; left: 108px; border: 3px solid var(--gold); display: flex; align-items: center; justify-content: center; font-weight: bold; color: var(--gold); font-size: 13px; z-index: 5;">BDB</div>
+                </div>
+            </div>
+            <button class="btn btn-gold px-5 py-2 mt-3" onclick="spinWheel()">Крутить Колесо</button>
         </div>
+
+        <!-- 2. СЛОТЫ -->
+        <div id="game-slots" class="game-container" style="display: none;">
+            <div class="my-4">
+                <div class="slot-machine">
+                    <div class="slot-window" id="slot1">777</div>
+                    <div class="slot-window" id="slot2">BDB</div>
+                    <div class="slot-window" id="slot3">BAR</div>
+                </div>
+            </div>
+            <button class="btn btn-gold px-5 py-2" onclick="spinSlots()">Запустить слоты</button>
+        </div>
+
+        <!-- 3. КОСТИ -->
+        <div id="game-dice" class="game-container" style="display: none;">
+            <div class="casino-felt p-4 my-4 d-inline-block">
+                <div class="d-flex gap-4">
+                    <div class="dice-cube" id="dice1">6</div>
+                    <div class="dice-cube" id="dice2">4</div>
+                </div>
+            </div>
+            <div>
+                <button class="btn btn-gold px-5 py-2" onclick="rollDice()">Бросить кости (Craps)</button>
+            </div>
+        </div>
+
+        <!-- 4. БЛЕКДЖЕК (21) -->
+        <div id="game-blackjack" class="game-container" style="display: none;">
+            <div class="casino-felt p-4 my-4 text-start">
+                <div class="mb-3">
+                    <span class="text-light fw-bold">Дилер (СУБД BDB): Очки: <span id="dealer-score">?</span></span>
+                    <div id="dealer-cards" class="d-flex gap-2 mt-2"></div>
+                </div>
+                <hr class="border-secondary">
+                <div>
+                    <span class="text-light fw-bold">Ваша рука: Очки: <span id="player-score">0</span></span>
+                    <div id="player-cards" class="d-flex gap-2 mt-2"></div>
+                </div>
+            </div>
+            <div class="d-flex justify-content-center gap-3">
+                <button class="btn btn-gold px-4 py-2" id="hit-btn" onclick="hitBJ()">Взять (Hit)</button>
+                <button class="btn btn-outline-light px-4 py-2" id="stand-btn" onclick="standBJ()">Хватит (Stand)</button>
+                <button class="btn btn-outline-warning px-4 py-2" onclick="startBJ()">Новая раздача</button>
+            </div>
+        </div>
+
+        <!-- 5. ПОКЕР -->
+        <div id="game-poker" class="game-container" style="display: none;">
+            <div class="casino-felt p-4 my-4">
+                <p class="text-light fw-bold mb-3">Видео-покер BDB:</p>
+                <div id="poker-hand-cards" class="d-flex justify-content-center gap-2 mb-3">
+                    <div class="playing-card red-suit"><span>10</span><span>♦</span></div>
+                    <div class="playing-card red-suit"><span>J</span><span>♦</span></div>
+                    <div class="playing-card red-suit"><span>Q</span><span>♦</span></div>
+                    <div class="playing-card red-suit"><span>K</span><span>♦</span></div>
+                    <div class="playing-card red-suit"><span>A</span><span>♦</span></div>
+                </div>
+            </div>
+            <button class="btn btn-gold px-4 py-2" onclick="playPoker()">Сдать комбинацию</button>
+        </div>
+
+        <h4 class="mt-4 text-subtext" id="result-text">Выберите режим, ставку и совершите транзакцию</h4>
     </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    const wheel = document.getElementById('wheel');
-    const spinBtn = document.getElementById('spin-btn');
-    const resultText = document.getElementById('result-text');
+    function triggerConfetti() {
+        if (typeof confetti === 'function') {
+            confetti({
+                particleCount: 120,
+                spread: 70,
+                origin: { y: 0.6 }
+            });
+        }
+    }
+
+    function syncSelectedNodeDisplay() {
+        BDBStore.syncUI();
+    }
+
+    function switchGame(btn, gameId) {
+        document.querySelectorAll('.game-container').forEach(el => el.style.display = 'none');
+        document.querySelectorAll('.game-tab-btn').forEach(el => {
+            el.classList.remove('active-tab');
+            el.classList.add('inactive-tab');
+        });
+
+        document.getElementById('game-' + gameId).style.display = 'block';
+        btn.classList.remove('inactive-tab');
+        btn.classList.add('active-tab');
+
+        document.getElementById('wheel-bet-type').style.display = (gameId === 'wheel') ? 'inline-block' : 'none';
+        document.getElementById('result-text').innerText = "Готово к проведению операции в выбранном модуле.";
+
+        if (gameId === 'blackjack') startBJ();
+    }
+
+    // 1. Колесо с идеальным расчетом угла
     let currentRotation = 0;
+    function spinWheel() {
+        const betAmount = parseFloat(document.getElementById('betAmountInput').value);
+        const nodeId = document.getElementById('dbNodeSelect').value;
+        const currentBalance = BDBStore.getNodes()[nodeId];
 
-    spinBtn.addEventListener('click', () => {
-        spinBtn.disabled = true;
-        resultText.innerText = "Бурмалда обрабатывает транзакцию...";
+        if (currentBalance < betAmount) {
+            alert("Недостаточно средств на выбранном узле СУБД!");
+            return;
+        }
 
-        const extraDegrees = Math.floor(Math.random() * 360);
-        currentRotation += 1800 + extraDegrees;
-        wheel.style.transform = `rotate(${currentRotation}deg)`;
+        const ring = document.getElementById('wheel-ring');
+        const betChoice = document.getElementById('wheelBetChoice').value;
+        document.getElementById('result-text').innerText = "Отправка транзакции на узел " + nodeId + "...";
+
+        const extra = Math.floor(Math.random() * 360);
+        currentRotation += 1800 + extra;
+        ring.style.transform = `rotate(${currentRotation}deg)`;
 
         setTimeout(() => {
-            spinBtn.disabled = false;
-            const normalizedAngle = (360 - (currentRotation % 360)) % 360;
-            if (normalizedAngle >= 0 && normalizedAngle < 18) {
-                resultText.innerHTML = "<span class='text-success fw-bold'>ВЫПАЛ ЗЕРО (0)! Ячейка зафиксирована.</span>";
-            } else if (Math.floor(normalizedAngle / 18) % 2 === 1) {
-                resultText.innerHTML = "<span class='text-danger fw-bold'>ВЫПАЛО КРАСНОЕ! Блок обновлен.</span>";
+            const angle = (360 - (currentRotation % 360)) % 360;
+            let sectorColor = 'black';
+            if (angle < 9 || angle >= 351) sectorColor = 'green';
+            else if (Math.floor((angle + 9) / 18) % 2 === 1) sectorColor = 'red';
+
+            let win = false;
+            let multiplier = 0;
+
+            if (sectorColor === 'green' && betChoice === 'green') { win = true; multiplier = 35; }
+            else if (sectorColor === 'red' && betChoice === 'red') { win = true; multiplier = 2; }
+            else if (sectorColor === 'black' && betChoice === 'black') { win = true; multiplier = 2; }
+
+            if (win) {
+                const winAmount = betAmount * (multiplier - 1);
+                BDBStore.setNodeScore(nodeId, currentBalance + winAmount);
+                triggerConfetti();
+                document.getElementById('result-text').innerHTML = `<span class='text-success fw-bold'>ВЫИГРЫШ! Выпало ${sectorColor.toUpperCase()}. Баланс БД пополнен на +${winAmount.toFixed(2)} CR</span>`;
             } else {
-                resultText.innerHTML = "<span class='text-subtext fw-bold'>ВЫПАЛО ЧЕРНОЕ! Блок обновлен.</span>";
+                BDBStore.setNodeScore(nodeId, currentBalance - betAmount);
+                document.getElementById('result-text').innerHTML = `<span class='text-danger fw-bold'>ПРОИГРЫШ! Выпало ${sectorColor.toUpperCase()}. Списано с БД: -${betAmount} CR</span>`;
             }
         }, 4000);
-    });
+    }
+
+    // 2. Слоты с анимацией
+    function spinSlots() {
+        const betAmount = parseFloat(document.getElementById('betAmountInput').value);
+        const nodeId = document.getElementById('dbNodeSelect').value;
+        const currentBalance = BDBStore.getNodes()[nodeId];
+        if (currentBalance < betAmount) { alert("Недостаточно средств на узле!"); return; }
+
+        const w1 = document.getElementById('slot1');
+        const w2 = document.getElementById('slot2');
+        const w3 = document.getElementById('slot3');
+
+        w1.classList.add('slot-spin');
+        w2.classList.add('slot-spin');
+        w3.classList.add('slot-spin');
+
+        setTimeout(() => {
+            w1.classList.remove('slot-spin');
+            w2.classList.remove('slot-spin');
+            w3.classList.remove('slot-spin');
+
+            const symbols = ['777', 'BDB', 'BAR', 'CHIP', 'BELL'];
+            const s1 = symbols[Math.floor(Math.random() * symbols.length)];
+            const s2 = symbols[Math.floor(Math.random() * symbols.length)];
+            const s3 = symbols[Math.floor(Math.random() * symbols.length)];
+
+            w1.innerText = s1;
+            w2.innerText = s2;
+            w3.innerText = s3;
+
+            if (s1 === s2 && s2 === s3) {
+                let mult = (s1 === '777') ? 10 : 5;
+                let winAmount = betAmount * mult;
+                BDBStore.setNodeScore(nodeId, currentBalance + winAmount);
+                triggerConfetti();
+                document.getElementById('result-text').innerHTML = `<span class='text-success fw-bold'>ДЖЕКПОТ! Выигрыш x${mult} (+${winAmount.toFixed(2)} CR). Баланс БД обновлен.</span>`;
+            } else {
+                BDBStore.setNodeScore(nodeId, currentBalance - betAmount);
+                document.getElementById('result-text').innerHTML = `<span class='text-subtext'>Комбинация пуста. Списано: -${betAmount} CR.</span>`;
+            }
+        }, 800);
+    }
+
+    // 3. Кости
+    function rollDice() {
+        const betAmount = parseFloat(document.getElementById('betAmountInput').value);
+        const nodeId = document.getElementById('dbNodeSelect').value;
+        const currentBalance = BDBStore.getNodes()[nodeId];
+        if (currentBalance < betAmount) { alert("Недостаточно средств!"); return; }
+
+        const d1Elem = document.getElementById('dice1');
+        const d2Elem = document.getElementById('dice2');
+
+        d1Elem.classList.add('rolling');
+        d2Elem.classList.add('rolling');
+
+        setTimeout(() => {
+            d1Elem.classList.remove('rolling');
+            d2Elem.classList.remove('rolling');
+
+            const d1 = Math.floor(Math.random() * 6) + 1;
+            const d2 = Math.floor(Math.random() * 6) + 1;
+            d1Elem.innerText = d1;
+            d2Elem.innerText = d2;
+            const sum = d1 + d2;
+
+            if (sum === 7 || sum === 11) {
+                BDBStore.setNodeScore(nodeId, currentBalance + betAmount);
+                triggerConfetti();
+                document.getElementById('result-text').innerHTML = `<span class='text-success fw-bold'>Сумма ${sum} (NATURAL)! Зачислено в БД (+${betAmount} CR).</span>`;
+            } else {
+                BDBStore.setNodeScore(nodeId, currentBalance - betAmount);
+                document.getElementById('result-text').innerHTML = `<span class='text-danger fw-bold'>Сумма ${sum}. Проигрыш (-${betAmount} CR).</span>`;
+            }
+        }, 500);
+    }
+
+    // 4. Блекджек (21)
+    let deck = [];
+    let playerHand = [];
+    let dealerHand = [];
+    let bjActive = false;
+
+    function createDeck() {
+        const suits = ['♠', '♥', '♦', '♣'];
+        const vals = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+        deck = [];
+        suits.forEach(s => { vals.forEach(v => deck.push({val: v, suit: s})); });
+        deck.sort(() => Math.random() - 0.5);
+    }
+
+    function getCardVal(card) {
+        if (['J', 'Q', 'K'].includes(card.val)) return 10;
+        if (card.val === 'A') return 11;
+        return parseInt(card.val);
+    }
+
+    function calcScore(hand) {
+        let score = 0;
+        let aces = 0;
+        hand.forEach(c => {
+            if (c.val === 'A') aces++;
+            score += getCardVal(c);
+        });
+        while (score > 21 && aces > 0) {
+            score -= 10;
+            aces--;
+        }
+        return score;
+    }
+
+    function startBJ() {
+        createDeck();
+        playerHand = [deck.pop(), deck.pop()];
+        dealerHand = [deck.pop(), deck.pop()];
+        bjActive = true;
+        document.getElementById('hit-btn').disabled = false;
+        document.getElementById('stand-btn').disabled = false;
+        renderBJ(false);
+        document.getElementById('result-text').innerText = "Новая раздача в 21. Сделайте ход.";
+    }
+
+    function renderBJ(gameOver) {
+        let pHtml = '';
+        playerHand.forEach((c, i) => {
+            let isRed = (c.suit === '♥' || c.suit === '♦');
+            pHtml += `<div class="playing-card ${isRed ? 'red-suit' : ''}" style="animation-delay: ${i * 0.1}s"><span>${c.val}</span><span>${c.suit}</span></div>`;
+        });
+        document.getElementById('player-cards').innerHTML = pHtml;
+        document.getElementById('player-score').innerText = calcScore(playerHand);
+
+        let dHtml = '';
+        dealerHand.forEach((c, idx) => {
+            if (idx === 1 && !gameOver) {
+                dHtml += `<div class="playing-card bg-secondary text-white"><span>?</span><span>?</span></div>`;
+            } else {
+                let isRed = (c.suit === '♥' || c.suit === '♦');
+                dHtml += `<div class="playing-card ${isRed ? 'red-suit' : ''}"><span>${c.val}</span><span>${c.suit}</span></div>`;
+            }
+        });
+        document.getElementById('dealer-cards').innerHTML = dHtml;
+        document.getElementById('dealer-score').innerText = gameOver ? calcScore(dealerHand) : getCardVal(dealerHand[0]);
+    }
+
+    function hitBJ() {
+        if (!bjActive) return;
+        playerHand.push(deck.pop());
+        const pScore = calcScore(playerHand);
+        renderBJ(false);
+        if (pScore > 21) {
+            bjActive = false;
+            document.getElementById('hit-btn').disabled = true;
+            document.getElementById('stand-btn').disabled = true;
+            const bet = parseFloat(document.getElementById('betAmountInput').value);
+            const nodeId = document.getElementById('dbNodeSelect').value;
+            BDBStore.setNodeScore(nodeId, BDBStore.getNodes()[nodeId] - bet);
+            document.getElementById('result-text').innerHTML = "<span class='text-danger fw-bold'>ПЕРЕБОР! Списано с базы данных.</span>";
+        }
+    }
+
+    function standBJ() {
+        if (!bjActive) return;
+        bjActive = false;
+        document.getElementById('hit-btn').disabled = true;
+        document.getElementById('stand-btn').disabled = true;
+
+        let dScore = calcScore(dealerHand);
+        while (dScore < 17) {
+            dealerHand.push(deck.pop());
+            dScore = calcScore(dealerHand);
+        }
+        renderBJ(true);
+
+        const pScore = calcScore(playerHand);
+        const bet = parseFloat(document.getElementById('betAmountInput').value);
+        const nodeId = document.getElementById('dbNodeSelect').value;
+        const currentBalance = BDBStore.getNodes()[nodeId];
+
+        if (dScore > 21 || pScore > dScore) {
+            BDBStore.setNodeScore(nodeId, currentBalance + bet);
+            triggerConfetti();
+            document.getElementById('result-text').innerHTML = `<span class='text-success fw-bold'>ПОБЕДА В 21! Выигрыш: +${bet} CR зачислен в СУБД.</span>`;
+        } else if (pScore === dScore) {
+            document.getElementById('result-text').innerHTML = "<span class='text-gold fw-bold'>НИЧЬЯ! Возврат ставки.</span>";
+        } else {
+            BDBStore.setNodeScore(nodeId, currentBalance - bet);
+            document.getElementById('result-text').innerHTML = `<span class='text-danger fw-bold'>ДИЛЕР ВЫИГРАЛ! Списано: -${bet} CR.</span>`;
+        }
+    }
+
+    // 5. Покер
+    function playPoker() {
+        const betAmount = parseFloat(document.getElementById('betAmountInput').value);
+        const nodeId = document.getElementById('dbNodeSelect').value;
+        const currentBalance = BDBStore.getNodes()[nodeId];
+        if (currentBalance < betAmount) { alert("Недостаточно средств!"); return; }
+
+        const suits = ['♠', '♥', '♦', '♣'];
+        const vals = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+        let hand = [];
+        for (let i = 0; i < 5; i++) {
+            hand.push({
+                val: vals[Math.floor(Math.random() * vals.length)],
+                suit: suits[Math.floor(Math.random() * suits.length)]
+            });
+        }
+
+        let html = '';
+        hand.forEach((c, i) => {
+            let isRed = (c.suit === '♥' || c.suit === '♦');
+            html += `<div class="playing-card ${isRed ? 'red-suit' : ''}" style="animation-delay: ${i * 0.08}s"><span>${c.val}</span><span>${c.suit}</span></div>`;
+        });
+        document.getElementById('poker-hand-cards').innerHTML = html;
+
+        const isWin = Math.random() > 0.5;
+        if (isWin) {
+            BDBStore.setNodeScore(nodeId, currentBalance + (betAmount * 2));
+            triggerConfetti();
+            document.getElementById('result-text').innerHTML = `<span class='text-success fw-bold'>Успешная комбинация покера! Выигрыш: +${(betAmount*2).toFixed(2)} CR.</span>`;
+        } else {
+            BDBStore.setNodeScore(nodeId, currentBalance - betAmount);
+            document.getElementById('result-text').innerHTML = `<span class='text-danger fw-bold'>Слабый расклад. Списано: -${betAmount} CR.</span>`;
+        }
+    }
 </script>
 {% endblock %}

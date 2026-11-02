@@ -1,18 +1,9 @@
-import os
-from django.conf import settings
 from django.shortcuts import render
-from .services import BurmaldaDBEngine
-
 
 def index(request):
     return render(request, 'myapp/index.html')
 
-
 def table_view(request):
-    # Путь к твоему файлу (например, лежит в корне проекта или в папке с данными)
-    # Пример: bin_file_path = os.path.join(settings.BASE_DIR, 'data.bin')
-
-    # Пока для примера используем заглушку, но движок полностью готов принимать реальные бинарники
     table_data = {
         'headers': ['ID (int)', 'Code (smallint)', 'Score (float)', 'Name (char 50)'],
         'rows': [
@@ -24,6 +15,9 @@ def table_view(request):
     }
     return render(request, 'myapp/table_view.html', {'table': table_data})
 
+def diagram_view(request):
+    """Представление Диаграммы БД в стиле SSMS 2022"""
+    return render(request, 'myapp/diagram_view.html')
 
 def roulette_view(request):
     return render(request, 'myapp/roulette.html')
